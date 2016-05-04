@@ -1,0 +1,47 @@
+<!doctype html><html class="no-js" lang=""><head><meta charset="utf-8"><meta name="description" content=""><meta name="viewport" content="width=device-width,initial-scale=1"><title>online-monitoring</title><link rel="apple-touch-icon" href="apple-touch-icon.png"><!-- Place favicon.ico in the root directory --><link rel="stylesheet" href="styles/main.css"><script src="scripts/vendor/modernizr.js"></script></head><body><!--[if lt IE 10]>
+          <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+        <![endif]--><style>#spinner {
+                width: 100%;
+                height: 100%;
+                background-color: #ffffff;
+                position: absolute;
+                padding-top: 300px;
+                opacity: 0.4;
+                z-Index: 1000;
+            }
+
+            .titlelist {
+                color: #505050;
+                padding-top: 1em;
+
+            }
+            
+            .titlelist li {
+                font-size: 85%;
+            }
+            
+            .titlelist li .number{
+                display: inline-block;
+                min-width: 2em; 
+                width: 2em;
+                text-align: left; 
+            }</style><div id="spinner"><div style="width: 100%; text-align: center"><img style="display: inline-block" src="images/spinner.gif"></div></div><div class="container"><div class="header"><!--ul id="datemenu" class="nav nav-pills pull-right">
+                </ul--><ul id="datemenu_" class="nav nav-pills pull-right"><li class="dropdown" role="presentation"><a class="dropdown-toggle" aria-expanded="false" aria-haspopup="true" role="button" href="#" data-toggle="dropdown">DATUM / SUCHE <span class="caret"></span></a><ul class="dropdown-menu" id="datemenu"><li><a href="#">Action</a></li><li class="divider" role="separator"></li><li><a href="#">Action</a></li></ul></li></ul><h3 class="text-muted">online-monitoring <a href="#" data-toggle="modal" data-target="#about"><span class="small glyphicon glyphicon-info-sign" aria-hidden="true"></span></a> <a href="http://www.betahaus.com/berlin/" target="_blank"><img src="images/icon.png" style="border: 0px"></a></h3></div><div style="height: 550px; width: 100%; margin-left: auto; margin-right: auto"><!--div id="vis" style="width: 800px; margin-left: 74px;"--><div id="vis"></div></div></div><div class="container"><hr><p><a href="https://twitter.com/dpa_newslab" target="_blank"><img src="images/newslab-logo.gif" style="height: 30px; opacity: 0.8; border: 0px"></a> <a href="http://newsstreamproject.org" target="_blank"><img src="images/newsstream-logo.png" style="margin-top: 3px; float: right; height: 20px; opacity: 0.5; border: 0px"></a></p></div><!-- Modal Help --><div class="modal fade" id="about" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"><div class="modal-dialog" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button><h4 class="modal-title" id="myModalLabel">online-monitoring</h4></div><div class="modal-body"><h4>About this work</h4><p>It's just a demo to show how to do crossfilter-like visualizations with the great <a href="http://vega.github.io/">Vega</a> visualization grammar.</p><p></p><p>Click on the bar chart to see how the circular marks get filtered and the table gets redrawn accordingly.</p><p>Another feature is the detail view - a Bootstrap modal that opens whenever you click on a data point. As you see, the browser can support handling arount 7000 data points, aggregating on the fly, but still being able to display every data point</p></div><div></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">OK</button></div></div></div></div><!-- Modal Detail --><div class="modal fade" id="detail" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"><div class="modal-dialog" role="document"><div class="modal-content"></div></div></div><!-- Modal Baustelle --><div class="modal fade" id="outoforder" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"><div class="modal-dialog" role="document"><div class="modal-content"></div></div></div><script type="text/html" id="detailTemplate"><div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">[<%= ressort ? ressort : ''  %>] <%= title %></h4>
+            </div>
+            <div class="modal-body">
+                <%= values.length %> Fundstelle<%= values.length > 1 ? "n" : "" %>: 
+                <% _.forEach(_.sortBy(values,function(a) { return a.publication_name }),function(link,i) { %><%= i>0 ? ' &middot;  ' : ''  %><a target="news" title="<%- link.title %> <%= perc(link.ratio) %>"href="<%= link.url %>"><%= link.publication_name %></a> <% }) %>
+                <br/>
+                <div class="titlelist">
+                <%= titles.length %><%= titles.length==1 ? " verwendeter " : " verwendete " %>Titel:
+                <ul>
+                    <% _.forEach(_.sortBy(titles,function(a) { return -a.n}),function(t,i) { %><li title="<%= t.m.join(", ")  %>"><span class="number"><%= t.n %>x</span> <%= t.t %></li><% })%>
+                </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+                </div></script><script type="text/html" id="menuTemplate"><% _.forEach(items,function(item) { %>
+                <li><a href="<%= item.link %>"><%= item.label %></a></li>
+                <% })%></script><script src="scripts/vendor.js"></script><script src="scripts/plugins.js"></script><script src="scripts/main.js"></script></body></html>

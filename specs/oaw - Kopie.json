@@ -1,0 +1,1489 @@
+{
+   "parameters": [
+    {
+        "name": " ",
+        "signal": "q",
+        "type": "text",
+        "value": "",
+        "placeholder": "Suche im Titel",
+        "autocomplete": "off"
+    }
+    ],
+    "actions": {
+        "export": false,
+        "source": false,
+        "editor": false
+    },
+    "spec": {
+        "width": 500,
+        "height": 350,
+        "signals": [
+        {
+            "name": "overBubble",
+            "init": {},
+            "streams": [
+            {
+                "type": "@story:mouseover, @storyback:mouseover",
+                "expr": "{ key: datum.key, y : eventY(), x: eventX(), rx: eventX('tooltip'), i: eventItem() }"
+            },
+            {
+                "type": "@story:mouseout, @storyback:mouseout",
+                "expr": "{}"
+            }
+            ]
+        },
+        {
+            "name": "overRessort",
+            "init": {},
+            "streams": [
+            {
+                "type": "@ressortbar:mouseover",
+                "expr": "{ ressort: datum.ressort, x: eventItem().x, y: eventItem().y }"
+            },
+            {
+                "type": "@ressortbar:mouseout",
+                "expr": "{ i : {} }"
+            }
+            ]
+        },
+        {
+            "name": "clickRessort",
+            "init": {
+                "ressort": ""
+            },
+            "streams": [
+            {
+                "type": "@ressortbar:mousedown",
+                "expr": "clickRessort.ressort != datum.ressort ?  { ressort : datum.ressort } : { ressort : '*' }"
+            },
+            {
+                "type": "@ressortbar:mouseup",
+                "expr": "clickRessort.ressort == '*' ? { ressort : '' } : { ressort: clickRessort.ressort }"
+            }
+            ]
+        },
+        {
+            "name" : "clickStory",
+            "init" : {
+                "story" : ""
+            },
+            "streams" : [
+            {
+                "type" : "@story:mousedown, @top10title:mousedown, @top10bar:mousedown",
+                "expr" : "{ story : datum.guid }"
+            }
+            ]
+        }
+        ],
+        "data": [
+        {
+            "name": "sourced",
+            "url": "data/2016-02-13.csv",
+            "format": {
+                "type": "csv"
+            },
+            "transform": [
+            {
+                "type": "filter",
+                "test": "datum.ressort != 'rs'"
+            }
+            ]
+        },
+        {
+            "name": "byid",
+            "source": "sourced",
+            "transform": [
+            {
+                "type": "facet",
+                "groupby": [
+                "guid"
+                ],
+                "summarize": {
+                    "ratio": [
+                    "mean",
+                    "count",
+                    "min",
+                    "max"
+                    ],
+                    "common_length": [
+                    "mean",
+                    "min",
+                    "max"
+                    ],
+                    "length": [
+                    "mean",
+                    "min",
+                    "max"
+                    ]
+                }
+            },
+            {
+                "type": "filter",
+                "test": "datum.count_ratio>1"
+            },
+            {
+                "type": "sort",
+                "by": "-count_ratio"
+            },
+            {
+                "type": "rank"
+            },
+            {
+                "type": "formula",
+                "field": "title",
+                "expr": "datum.values[0].title"
+            },
+            {
+                "type": "formula",
+                "field": "ressort",
+                "expr": "datum.values[0].ressort"
+            }
+            ]
+        },
+        {
+            "name" : "story",
+            "source" : "byid",
+            "transform" : [
+            {
+                "type" : "filter",
+                "test" : "clickStory.story ? clickStory.story == datum.guid : false" 
+            }
+            ]
+        },
+        {
+            "name": "byressort",
+            "source": "byid",
+            "transform": [
+            {
+                "type": "facet",
+                "groupby": [
+                "values[0].ressort"
+                ],
+                "summarize": {
+                    "count_ratio": [
+                    "sum",
+                    "count"
+                    ]
+                }
+            },
+            {
+                "type": "formula",
+                "field": "ressort",
+                "expr": "datum.values[0].values[0].ressort"
+            },
+            {
+                "type": "formula",
+                "field": "sum",
+                "expr": "datum.sum_count_ratio"
+            },
+            {
+                "type": "formula",
+                "field": "count",
+                "expr": "datum.count_count_ratio"
+            }
+            ]
+        },
+        {
+            "name": "ressortFilter",
+            "values": [
+            {}
+            ]
+        },
+        {
+            "name": "test",
+            "values": [
+            {
+                "ressort": "pl",
+                "count": 10
+            },
+            {
+                "ressort": "sp",
+                "count": 5
+            }
+            ]
+        },
+        {
+            "name": "hovered",
+            "source": "byid",
+            "transform": [
+            {
+                "type": "filter",
+                "test": "datum.key==overBubble.key"
+            },
+            {
+                "type": "formula",
+                "field": "coords",
+                "expr": "{ x:  overBubble.x, y: overBubble.i.y, rx : overBubble.i.x }"
+            }
+            ]
+        },
+        {
+            "name": "searched",
+            "source": "byid",
+            "transform": [
+            {
+                "type": "filter",
+                "test": "q=='' || test(regexp(q,'i'),datum.title)"
+            },
+            {
+                "type": "filter",
+                "test": "clickRessort.ressort == datum.ressort || clickRessort.ressort == '' "
+            },
+            {
+                "type": "sort",
+                "by": "-count_ratio"
+            },
+            {
+                "type": "rank",
+                "output": {
+                    "rank": "srank"
+                }
+            }
+            ]
+        },
+        {
+            "name": "top10",
+            "source": "searched",
+            "transform": [
+            {
+                "type": "rank",
+                "output": {
+                    "rank": "rrank"
+                }
+            },
+            {
+                "type": "filter",
+                "test": "datum.rrank<11"
+            }
+            ]
+        },
+        {
+            "name": "meta",
+            "source": "byid",
+            "transform": [
+            {
+                "type": "aggregate",
+                "summarize": [
+                {
+                    "field": "count_ratio",
+                    "ops": [
+                    "sum"
+                    ],
+                    "as": [
+                    "found"
+                    ]
+                },
+                {
+                    "field": "guid",
+                    "ops": [
+                    "distinct"
+                    ],
+                    "as": [
+                    "stories"
+                    ]
+                },
+                {
+                    "field": "values[0]['publication date']",
+                    "ops": [
+                    "values"
+                    ],
+                    "as": [
+                    "all"
+                    ]
+                }
+                ]
+            },
+            {
+                "type": "formula",
+                "field": "date",
+                "expr": "slice(datum.all[0].values[0]['publication_date'],0,10)"
+            }
+            ]
+        },
+        {
+            "name": "metasearched",
+            "source": "searched",
+            "transform": [
+            {
+                "type": "aggregate",
+                "summarize": [
+                {
+                    "field": "count_ratio",
+                    "ops": [
+                    "sum"
+                    ],
+                    "as": [
+                    "found"
+                    ]
+                },
+                {
+                    "field": "guid",
+                    "ops": [
+                    "distinct"
+                    ],
+                    "as": [
+                    "stories"
+                    ]
+                },
+                {
+                    "field": "values[0]['publication date']",
+                    "ops": [
+                    "values"
+                    ],
+                    "as": [
+                    "all"
+                    ]
+                }
+                ]
+            },
+            {
+                "type": "formula",
+                "field": "date",
+                "expr": "slice(datum.all[0].values[0]['publication_date'],0,10)"
+            },
+            {
+                "type" : "filter",
+                "test" : "q != '' || clickRessort.ressort != ''"
+            }
+            ]
+        },
+        {
+            "name" : "daterange",
+            "source" : "sourced",
+            "transform" : [ 
+            {
+                "type" : "sort",
+                "field" : "publication_date"
+            },
+            {
+                "type" : "rank"
+            },
+            {
+                "type" : "aggregate",
+                "summarize" : [
+                {
+                    "field" : "publication_date",
+                    "ops" : [ "argmin", "argmax" ],
+                    "as"  : [ "from", "to" ]
+                }
+                ]
+            },
+            {
+                "type" : "formula",
+                "field" : "last",
+                "expr" : "substring(datum.to.publication_date,11,16 )"
+            },
+            {
+                "type" : "formula",
+                "field" : "last_or_none",
+                "expr" : "datum.last>'23:50' ? null : datum.last"
+            },
+            {
+                "type" : "formula",
+                "field" : "first",
+                "expr" : "substring(datum.from.publication_date,11,16 )"
+            },
+            {
+                "type" : "formula",
+                "field" : "dayfirst",
+                "expr" : "substring(datum.from.publication_date,0,10)"
+            }
+
+            ]
+        }
+        ],
+        "scales": [
+        {
+            "name": "ressort",
+            "type": "ordinal",
+            "domain": [
+            "sp",
+            "ku",
+            "vm",
+            "wi",
+            "pl"
+            ],
+            "range": "category10",
+            "sort": true
+        }
+        ],
+        "marks": [
+        {
+            "name": "toptitles",
+            "type": "group",
+            "description": "Top 10 list",
+            "clip": true,
+            "from": {
+                "data": {}
+            },
+            "properties": {
+                "enter": {
+                    "x": {
+                        "value": 0
+                    },
+                    "width": {
+                        "value": 720
+                    },
+                    "y": {
+                        "value": 315
+                    },
+                    "height": {
+                        "value": 240
+                    },
+                    "fill": {
+                        "value": "#fff"
+                    }
+                }
+            },
+            "scales": [
+            {
+                "name": "topx",
+                "nice": true,
+                "range": "width",
+                "zero": false,
+                "domainMin": {
+                    "data": "byid",
+                    "field": "min_ratio"
+                },
+                "domainMax": {
+                    "data": "byid",
+                    "field": "max_ratio"
+                }
+            },
+            {
+                "name": "topy",
+                "type": "ordinal",
+                "range": "height",
+                "domain": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10
+                ]
+            }
+            ],
+            "marks": [
+            {
+                "type": "text",
+                "from": {},
+                "properties": {
+                    "enter": {
+                        "x": {
+                            "value": 567
+                        },
+                        "align": {
+                            "value": "right"
+                        },
+                        "y": {
+                            "value": -10
+                        },
+                        "fontSize": {
+                            "value": 18
+                        },
+                        "fontWeight": {
+                            "value": "bold"
+                        },
+                        "fill": {
+                            "value": "#999"
+                        },
+                        "angle": {
+                            "value": 0
+                        }
+                    },
+                    "update": {
+                        "text": {
+                            "value": "Top 10"
+                        }
+                    }
+                }
+            },
+            {
+                "type": "text",
+                "from": {},
+                "properties": {
+                    "enter": {
+                        "x": {
+                            "value": 575
+                        },
+                        "align": {
+                            "value": "left"
+                        },
+                        "y": {
+                            "value": -10
+                        },
+                        "fontSize": {
+                            "value": 18
+                        },
+                        "fontWeight": {
+                            "value": "bold"
+                        },
+                        "fill": {
+                            "value":  "#999"
+                        },
+                        "angle": {
+                            "value": -0
+                        }
+                    },
+                    "update": {
+                        "text": {
+                            "signal": "clickRessort.ressort"
+                        }
+                    }
+                }
+            },
+            {
+                "type": "text",
+                "from": {},
+                "properties": {
+                    "enter": {
+                        "x": {
+                            "value": 513
+                        },
+                        "align": {
+                            "value": "left"
+                        },
+                        "y": {
+                            "value": 40
+                        },
+                        "fontSize": {
+                            "value": 12
+                        },
+                        "fill": {
+                            "value": "#999"
+                        },
+                        "angle": {
+                            "value": 0
+                        }
+                    },
+                    "update": {
+                        "text": {
+                            "signal": "q"                            
+                        }
+                    }
+                }
+            },
+            {
+                "type": "rect",
+                "name" : "top10bar",
+                "from": {
+                    "data": "top10"
+                },
+                "properties": {
+                    "update": {
+                        "y2": {
+                            "field": "rrank",
+                            "scale": "topy"
+                        },
+                        "width": {
+                            "value": 500
+                        },
+                        "height": {
+                            "band": true,
+                            "scale": "topy"
+                        },
+                        "fill": [
+                        {
+                            "test": "datum.rrank % 2 == 0",
+                            "value": "#fff"
+                        },
+                        {
+                            "value": "#ddd"
+                        }
+                        ],
+                        "fillOpacity": {
+                            "value": 0.5
+                        },
+                        "cursor" : {
+                            "value" : "pointer"
+                        }
+                    }
+                }
+            },
+            {
+                "type": "symbol",
+                "from": {
+                    "data": "top10"
+                },
+                "properties": {
+                    "update": {
+                        "y": {
+                            "field": "rrank",
+                            "scale": "topy",
+                            "offset": -9
+                        },
+                        "x": {
+                            "value": 10
+                        },
+                        "fill": {
+                            "field": "values[0].ressort",
+                            "scale": "ressort"
+                        },
+                        "fillOpacity": {
+                            "value": 0.6
+                        }
+                    }
+                }
+            },
+            {
+                "type": "text",
+                "name": "top10title",
+                "key": "_id",
+                "from": {
+                    "data": "top10"
+                },
+                "properties": {
+                    "enter": {
+                        "text": {
+                            "value": "!"
+                        }
+                    },
+                    "update": {
+                        "y": {
+                            "field": "rrank",
+                            "scale": "topy"
+                        },
+                        "x": {
+                            "value": 18
+                        },
+                        "dy": {
+                            "value": -2
+                        },
+                        "fontSize": {
+                            "value": 12
+                        },
+                        "fill": {
+                            "value": "#333"
+                        },
+                        "baseline": {
+                            "value": "bottom"
+                        },
+                        "text": {
+                            "template": "{{ datum.rank }}. {{datum.title}} [{{ datum.count_ratio }}x]"
+                        },
+                        "cursor" : {
+                            "value" : "pointer"
+                        }
+                    },
+                    "exit": {
+                        "text": {
+                            "value": "-"
+                        }
+                    }
+                }
+            }
+            ]
+        },
+        {
+            "name": "ressortbars",
+            "type": "group",
+            "description": "Ressort Histogram",
+            "properties": {
+                "enter": {
+                    "x": {
+                        "value": 0
+                    },
+                    "width": {
+                        "value": 150
+                    },
+                    "y": {
+                        "value": 20
+                    },
+                    "height": {
+                        "value": 100
+                    }
+                }
+            },
+            "scales": [
+            {
+                "name": "ressortx",
+                "type": "linear",
+                "nice": true,
+                "range": "width",
+                "zero": true,
+                "domain": {
+                    "data": "byressort",
+                    "field": "sum"
+                }
+            },
+            {
+                "name": "ressorty",
+                "type": "ordinal",
+                "range": "height",
+                "domain": {
+                    "data": "byressort",
+                    "field": "ressort"
+                }
+            }
+            ],
+            "axes": [
+            {
+                "type": "y",
+                "scale": "ressorty",
+                "tickSize": 0,
+                "properties": {
+                    "axis": {
+                        "stroke": {
+                            "value": "#999"
+                        },
+                        "strokeWidth": {
+                            "value": 0.5
+                        }
+                    },
+                    "ticks": {
+                        "stroke": {
+                            "value": "#999"
+                        },
+                        "strokeWidth": {
+                            "value": 0.5
+                        }
+                    },
+                    "labels": {
+                        "stroke": {
+                            "value": "#999"
+                        },
+                        "fill": {
+                            "value": "#999"
+                        },
+                        "fontSize": {
+                            "value": 10
+                        },
+                        "strokeWidth": {
+                            "value": 0.2
+                        }
+                    },
+                    "title": {
+                        "fill": {
+                            "value": "#999"
+                        }
+                    }
+                }
+            }
+            ],
+            "marks": [
+            {
+                "type": "text",
+                "from": {
+                    "data": "meta"
+                },
+                "properties": {
+                    "update": {
+                        "x": {
+                            "value": 1
+                        },
+                        "y": {
+                            "value": 528
+                        },
+                        "fontSize": {
+                            "value": 10
+                        },
+                        "fill": {
+                            "value": "#b8b8b8"
+                        },
+                        "text": {
+                            "template": "Datenbasis: {{ datum.stories }} dpa-Meldungen, {{ datum.found }} Fundstellen,"
+                        }
+                    }
+                }
+            },
+            {
+                "type": "text",
+                "from": {
+                    "data": "metasearched"
+                },
+                "properties": {
+                    "update": {
+                        "x": {
+                            "value": 513
+                        },
+                        "y": {
+                            "value": 310
+                        },
+                        "fontSize": {
+                            "value": 12
+                        },
+                        "fill": {
+                            "value": "#999"
+                        },
+                        "text": {
+                            "template": "{{ datum.stories }} dpa-Meldungen, {{ datum.found }} Fundstellen "
+                        }
+                    }
+                }
+            },
+            {
+                "type": "text",
+                "from": {
+                    "data": "daterange"
+                },
+                "properties": {
+                    "update": {
+                        "x": {
+                            "value": 249
+                        },
+                        "y": {
+                            "value": 528
+                        },
+                        "fontSize": {
+                            "value": 10
+                        },
+                        "fill": {
+                            "value": "#b8b8b8"
+                        },
+                        "text": {
+                            "template": "veröffentlicht zwischen {{ datum.first }} und {{ datum.last }} Uhr "
+                        }
+                    }
+                }
+            },
+            {
+                "type": "text",
+                "description" : "�berschrift - Datum, wird über dem Ressort-Histogramm angezeigt",
+                "from": {
+                    "data": "daterange"
+                },
+                "properties": {
+                    "update": {
+                        "x": {
+                            "value": -20
+                        },
+                        "y": {
+                            "value":0 
+                        },
+                        "fontSize": {
+                            "value": 30 
+                        },
+                        "fontWeight": {
+                            "value": "bold" 
+                        },
+                        "fill": {
+                            "value": "#777777"
+                        },
+                        "text": {
+                            "template": "{{ datum.dayfirst|slice:8,10 }}.{{ datum.dayfirst|slice:5,7 }}. {{ datum.last_or_none }}"
+                        }
+                    }
+                }
+            },
+            {
+                "type": "rect",
+                "name": "ressortbar",
+                "description" : "Anzahl der Fundstellen pro Ressort",
+                "from": {
+                    "data": "byressort"
+                },
+                "properties": {
+                    "enter": {
+                        "x": {
+                            "scale": "ressortx",
+                            "value": 0
+                        },
+                        "x2": {
+                            "scale": "ressortx",
+                            "field": "sum"
+                        },
+                        "y": {
+                            "scale": "ressorty",
+                            "field": "ressort"
+                        },
+                        "height": {
+                            "scale": "ressorty",
+                            "band": true,
+                            "offset": -2
+                        },
+                        "fill": {
+                            "scale": "ressort",
+                            "field": "ressort"
+                        },
+                        "fillOpacity": {
+                            "value": 0.5
+                        }
+                    }
+                }
+            },
+            {
+                "type": "rect",
+                "name": "ressortbar2",
+                "from": {
+                    "data": "byressort"
+                },
+                "properties": {
+                    "enter": {
+                        "x": {
+                            "scale": "ressortx",
+                            "value": 0
+                        },
+                        "x2": {
+                            "scale": "ressortx",
+                            "field": "count"
+                        },
+                        "y": {
+                            "scale": "ressorty",
+                            "field": "ressort"
+                        },
+                        "height": {
+                            "scale": "ressorty",
+                            "band": true,
+                            "offset": -2
+                        },
+                        "fill": {
+                            "scale": "ressort",
+                            "field": "ressort"
+                        },
+                        "fillOpacity": {
+                            "value": 0.5
+                        }
+                    }
+                }
+            }
+            ]
+        },
+        {
+            "name": "bubblebath",
+            "type": "group",
+            "descriptions": "story bubble scatter",
+            "properties": {
+                "enter": {
+                    "x": {
+                        "value": 0
+                    },
+                    "width": {
+                        "value": 655
+                    },
+                    "y": {
+                        "value": 0
+                    },
+                    "height": {
+                        "value": 250
+                    }
+                }
+            },
+            "scales": [
+            {
+                "name": "x",
+                "nice": true,
+                "range": "width",
+                "zero": false,
+                "domainMin": {
+                    "data": "byid",
+                    "field": "min_ratio"
+                },
+                "domainMax": {
+                    "data": "byid",
+                    "field": "max_ratio"
+                }
+            },
+            {
+                "name": "y",
+                "zero": false,
+                "range": "height",
+                "domainMin": 0,
+                "domainMax": {
+                    "data": "byid",
+                    "field": "count_ratio"
+                }
+            }
+            ],
+            "axes": [
+            {
+                "type": "x",
+                "scale": "x",
+                "offset": 0,
+                "title": "Übernahme",
+                "titleOffset": 18,
+                "layer" : "back",
+                "grid": false,
+                "values": [
+                0.3,
+                0.5,
+                0.75,
+                1
+                ],
+                "format": "%",
+                "properties": {
+                    "axis": {
+                        "stroke": {
+                            "value": "#999"
+                        },
+                        "strokeWidth": {
+                            "value": 0.5
+                        }
+                    },
+                    "ticks": {
+                        "stroke": {
+                            "value": "#999"
+                        },
+                        "strokeWidth": {
+                            "value": 0.5
+                        }
+                    },
+                    "labels": {
+                        "stroke": {
+                            "value": "#999"
+                        },
+                        "fontSize": {
+                            "value": 10
+                        },
+                        "fill": {
+                            "value": "#999"
+                        },
+                        "strokeWidth": {
+                            "value": 0.2
+                        }
+                    },
+                    "title": {
+                        "fill": {
+                            "value": "#999"
+                        },
+                        "fontSize": {
+                            "value": 17
+                        },"baseline": {"value": "middle"}
+                    }
+                }
+            },
+            {
+                "type": "y",
+                "scale": "y",
+                "offset": 5,
+                "title": "Fundstellen",
+                "titleOffset": 47,
+                "grid": false,
+                "orient": "right",
+                "properties": {
+                    "axis": {
+                        "stroke": {
+                            "value": "#999"
+                        },
+                        "strokeWidth": {
+                            "value": 0.5
+                        }
+                    },
+                    "ticks": {
+                        "stroke": {
+                            "value": "#999"
+                        },
+                        "strokeWidth": {
+                            "value": 0.5
+                        }
+                    },
+                    "labels": {
+                        "stroke": {
+                            "value": "#999"
+                        },
+                        "fontSize": {
+                            "value": 10
+                        },
+                        "fill": {
+                            "value": "#999"
+                        },
+                        "strokeWidth": {
+                            "value": 0.2
+                        }
+                    },
+                    "title": {
+                        "fill": {
+                            "value": "#999"
+                        },
+                        "fontSize": {
+                            "value": 18
+                        },"baseline": {"value": "top"},
+                        "align": {
+                            "value": "right"
+                        },"dx": {"value": -25}
+                    }
+                }
+            }
+            ],
+            "marks": [
+            {
+                "name": "storyback",
+                "type": "symbol",
+                "from": {
+                    "data": "byid"
+                },
+                "properties": {
+                    "enter": {
+                        "x": {
+                            "scale": "x",
+                            "field": "mean_ratio"
+                        },
+                        "y": {
+                            "scale": "y",
+                            "field": "count_ratio"
+                        },
+                        "fill": {
+                            "scale": "ressort",
+                            "field": "values[0].ressort"
+                        },
+                        "fillOpacity": {
+                            "value": 0.3
+                        },
+                        "cursor" : {
+                            "value" : "pointer"
+                        },
+                        "size": [
+                        {
+                            "value": 15
+                        }
+                        ]
+                    }
+                }
+            },
+            {
+                "name": "story",
+                "type": "symbol",
+                "from": {
+                    "data": "searched"
+                },
+                "properties": {
+                    "enter": {
+                        "x": {
+                            "scale": "x",
+                            "field": "mean_ratio"
+                        },
+                        "y": {
+                            "scale": "y",
+                            "field": "count_ratio"
+                        },
+                        "fill": {
+                            "scale": "ressort",
+                            "field": "values[0].ressort"
+                        },
+                        "fillOpacity": {
+                            "value": 0.6
+                        },
+                        "stroke": {
+                            "value": "#000"
+                        },
+                        "size": [
+                        {
+                            "value": 160
+                        }
+                        ]
+                    },
+                    "hover": {
+                        "fillOpacity": {
+                            "value": 1
+                        }
+                    },
+                    "update": {
+                        "fillOpacity": [
+                        {
+                            "test": "datum.ressort == overRessort.ressort ",
+                            "value": 1
+                        },
+                        {
+                            "value": 0.6
+                        }
+                        ],
+                        "size": [
+                        {
+                            "test": "datum.ressort == overRessort.ressort || datum.ressort == clickRessort.ressort || clickRessort.ressort =='' ",
+                            "value": 160
+                        },
+                        {
+                            "value": 0
+                        }
+                        ],
+                        "strokeWidth": [
+                        {
+                            "value": 0
+                        }
+                        ],
+                        "cursor" : {
+                            "value" : "pointer"
+                        }
+                    }
+                }
+            },
+            {
+                "type": "group",
+                "from": {
+                    "data": "hovered"
+                },
+                "name": "tooltip",
+                "description": "bubble tooltip",
+                "properties": {
+                    "enter": {
+                        "x": {
+                            "value": 0
+                        },
+                        "y": {
+                            "field": "coords.y",
+                            "offset": 10
+                        },
+                        "width": {
+                            "value": 500
+                        },
+                        "height": {
+                            "value": 30
+                        }
+                    }
+                },
+                "marks": [
+                {
+                    "type": "rect",
+                    "from": {
+                        "data": "hovered"
+                    },
+                    "properties": {
+                        "enter": {
+                            "width": {
+                                "field": {
+                                    "group": "width"
+                                }
+                            },
+                            "height": {
+                                "value": 20
+                            },
+                            "fill": {
+                                "value": "#efefef"
+                            },
+                            "fillOpacity": {
+                                "value": 0.6
+                            },
+                            "stroke": {
+                                "value": "#333"
+                            },
+                            "strokeWidth": {
+                                "value": 0.2
+                            }
+                        },
+                        "update": {
+                            "x": {
+                                "value": 0
+                            },
+                            "y": {
+                                "value": 0
+                            }
+                        }
+                    }
+                },
+                {
+                    "type": "symbol",
+                    "from": {
+                        "data": "hovered"
+                    },
+                    "properties": {
+                        "enter": {
+                            "shape": {
+                                "value": "triangle-up"
+                            },
+                            "x": {
+                                "field": "coords.rx"
+                            },
+                            "y": {
+                                "value": -2
+                            },
+                            "size": {
+                                "value": 20
+                            },
+                            "fill": {
+                                "value": "#999"
+                            }
+                        }
+                    }
+                },
+                {
+                    "type": "text",
+                    "from": {
+                        "data": "hovered"
+                    },
+                    "properties": {
+                        "enter": {
+                            "x": {
+                                "value": 250
+                            },
+                            "y2": {
+                                "value": 14
+                            },
+                            "fontSize": {
+                                "value": 12
+                            },
+                            "fill": {
+                                "value": "#333"
+                            },
+                            "align": {
+                                "value": "center"
+                            }
+                        },
+                        "update": {
+                            "text": {
+                                "template": "{{ datum.rank }}. {{ datum.title }} [{{ datum.count_ratio }}x]"
+                            }
+                        }
+                    }
+                },
+                {
+                    "type": "symbol",
+                    "shape": "circle",
+                    "size": {
+                        "value": 30
+                    },
+                    "properties": {
+                        "enter": {
+                            "size": {
+                                "value": 33
+                            },
+                            "fill": "#f00",
+                            "x": {
+                                "value": 0
+                            },
+                            "y": {
+                                "value": 0
+                            }
+                        }
+                    }
+                }
+                ]
+            },
+            {
+                "type": "group",
+                "from": {
+                    "data": "byressort",
+                    "transform": [
+                    {
+                        "type": "filter",
+                        "test": "datum.ressort==overRessort.ressort"
+                    }
+                    ]
+                },
+                "name": "ressorttooltip",
+                "description": "ressort tooltips",
+                "properties": {
+                    "enter": {
+                        "x": {
+                            "signal": "overRessort.x",
+                            "offset": -20
+                        },
+                        "y": {
+                            "signal": "overRessort.y",
+                            "offset": 30 
+                        },
+                        "width": {
+                            "value": 160
+                        },
+                        "height": {
+                            "value": 90
+                        }
+                    }
+                },
+                "marks": [
+                {
+                    "type": "rect",
+                    "from": {
+                        "data": []
+                    },
+                    "properties": {
+                        "enter": {
+                            "width": {
+                                "field": {
+                                    "group": "width"
+                                }
+                            },
+                            "height": {
+                                "value": 14
+                            },
+                            "fill": {
+                                "value": "#efefef"
+                            },
+                            "fillOpacity": {
+                                "value": 0.6
+                            },
+                            "stroke": {
+                                "value": "#333"
+                            },
+                            "strokeWidth": {
+                                "value": 0.2
+                            }
+                        }
+                    }
+                },
+                {
+                    "type": "symbol",
+                    "from": {
+                        "data": []
+                    },
+                    "properties": {
+                        "enter": {
+                            "shape": {
+                                "value": "triangle-up"
+                            },
+                            "x": {
+                                "value": 30
+                            },
+                            "y": {
+                                "value": -2
+                            },
+                            "size": {
+                                "value": 20
+                            },
+                            "fill": {
+                                "value": "#999"
+                            }
+                        }
+                    }
+                },
+                {
+                    "type": "text",
+                    "from": {
+                        "data": []
+                    },
+                    "properties": {
+                        "enter": {
+                            "x": {
+                                "value": 4
+                            },
+                            "y": {
+                                "value": 10
+                            },
+                            "fontSize": {
+                                "value": 8
+                            },
+                            "fill": {
+                                "value": "#333"
+                            },
+                            "align": {
+                                "value": "left"
+                            }
+                        },
+                        "update": {
+                            "text": {
+                                "template": "{{ parent.ressort }} :  {{ parent.count }} dpa-Meldungen {{ parent.sum }} Fundstellen"
+                            }
+                        }
+                    }
+                },
+                {
+                    "type": "symbol",
+                    "shape": "circle",
+                    "size": {
+                        "value": 30
+                    },
+                    "properties": {
+                        "enter": {
+                            "size": {
+                                "value": 33
+                            },
+                            "fill": "#f00",
+                            "x": {
+                                "value": 30
+                            },
+                            "y": {
+                                "value": 0
+                            }
+                        }
+                    }
+                }
+                ]
+            }
+            ]
+        }
+        ]
+    }
+}
