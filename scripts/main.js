@@ -39,7 +39,7 @@
         var h = location.hash;
         if (typeof window.vegaspec !== 'undefined') {
             $('#spinner').show();
-            window.vegaspec.spec.data[0].url = 'data/demo.csv';
+            window.vegaspec.spec.data[0].url = 'data/'+h.substr(1)+'.csv';
             parse(window.vegaspec);
         }
         $('#datemenu li').removeClass('active');
@@ -59,15 +59,15 @@
         var tfmt = d3.time.format('#%Y-%m-%d');
         var lfmt = d3.time.format('Datum: %d.%m.');
         var menu = [];
-        _.forEach([0, 1, 2, 3, 4, 5], function(d) {
-            var pit = new Date(now - d * (24 * 60 * 60 * 1000));
+        _.forEach([1, 2, 3, 4, 5,6,7,8,9,10,11,12,13,14,15], function(d) {
+            var pit = new Date(new Date() - d * (24 * 60 * 60 * 1000));
             menu.push({
                 'link': tfmt(pit),
                 'label': lfmt(pit)
             });
         });
-        menu[0].label = 'Heute';
-        menu[1].label = 'Gestern';
+        // menu[0].label = 'Heute';
+        // menu[1].label = 'Gestern';
         $('#datemenu').html(window.menuTemplate({
             'items': menu
         }));

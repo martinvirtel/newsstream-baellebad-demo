@@ -139,7 +139,7 @@
             },
             {
                 "type": "filter",
-                "test": "datum.count_ratio>1 || slice(q,0,2) == 'q:'"
+                "test": "datum.count_ratio>0 || slice(q,0,2) == 'q:'"
             },
             {
                 "type": "sort",
@@ -422,11 +422,11 @@
             "name": "ressort",
             "type": "ordinal",
             "domain": [
-            "sp",
-            "ku",
-            "vm",
-            "wi",
-            "pl"
+            "Finanzen",
+            "Kultur",
+            "Politik",
+            "Sport",
+            "Wirtschaft"
             ],
             "range": "category10",
             "sort": { "field" : "count_ratio", "op" : "sum" }
