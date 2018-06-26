@@ -109,5 +109,8 @@
                 $(window).trigger('hashchange');
             }
         }, 1000 * 60 * 5);
+        setTimeout(function() {
+            $('[data-target="#about"]').click();
+        }, 2000 );
     });
 })(vg, $, _);
