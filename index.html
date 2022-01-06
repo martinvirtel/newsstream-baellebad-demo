@@ -31,14 +31,13 @@
 
                         <p><i>To reopen this modal, please click on the <span class="small glyphicon glyphicon-info-sign" aria-hidden="true"></span> after the title.</i></p>
 
-                        <h3>About this work</h3><p>This graph shows how customers pick up stories provided to them by the wire service they trust, offered by <a href="https://www.dpa.com">dpa Deutsche Presseagentur</a>.  Each dot <img style="vertical-align: center" src="images/ball.png"> in the scatterplot represents a wire story, the higher it flies, the more customers have picked it up. The farther to the right it is located, the fewer changes these customers have made to the text of the story.
-
-                                </p><p><b>Technical Details</b> Data for this chart came from a massive news web crawl by <a href="https://www.neofonie.de/">Neofonie GmbH</a>, who also provided the data processing capabilites. Sentences written by dpa staff are identified within the news stories published by customers. The percentage of matching sentences for a particular story on a particulat website gives the score (scatterplot x axis).</p>
+                        <h3>About this work</h3><p>This visualization shows how customers pick up stories provided to them by the wire service they trust, <a href="https://www.dpa.com">dpa Deutsche Presseagentur</a>.  Each dot <img style="vertical-align: center" src="images/ball.png"> in the scatterplot represents a wire story, the higher it flies (y axis), the more customers have picked it up. The farther to the right it is located (x axis), the fewer changes these customers have made to the text of the story compared to the original dpa copy. </p>
+                        <p><b>Technical Details</b> Data came from a massive news web crawl by <a href="https://www.neofonie.de/">Neofonie GmbH</a>, who also ingested the dpa wire copy and compared the two. Sentences written by dpa staff are identified within the news stories published by customers. The percentage of matching sentences for a particular story on a particulat website gives the score (scatterplot x axis).</p>
 <p>
 Data points and links to the stories have been pseudonymized to protect the relationship between dpa and their customers.
 </p>
 <p>The chart also makes extensive use of the features of <a href="https://vega.github.io/vega/">Vega</a>, a phantastic tool for interactive data visualizations. As you see, the browser can support aggregating around 4000 data points on the fly, still being able to display every data point if you want to dive into the details.</p>
-</p>                <p><b>Features of the Chart</b>
+</p>                <p><b>Features of the visualization</b>
 <ul>
     <li>To filter, click on the bar chart on the left to see how the circles get filtered and the table gets redrawn.</li>
     <li>Hovering the mouse pointer above the table highlights its representation in the scatterplot and vice-versa.</li>
